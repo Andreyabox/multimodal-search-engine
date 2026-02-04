@@ -15,3 +15,24 @@ class QdrantSearchClient:
                 "text": models.VectorParams(size=vector_size, distance=models.Distance.COSINE),
             },
         )
+
+    def upsert_text_points(self, collection_name: str, vectors, payloads):
+        points = [
+            models.PointStruct(
+                id=idx,
+                vector={"text": vector, "image": vector},
+                payload=payload,
+            )
+            for idx, (vector, payload) in enumerate(zip(vectors, payloads), start=1)
+        ]
+        self.client.upsert(collection_name=collection_name, points=points, wait=True)
+
+    def search_text(self, collection_name: str, query_vector, limit: int = 5):
+        response = self.client.query_points(
+            collection_name=collection_name,
+            query=query_vector,
+            using="text",
+            limit=limit,
+            with_payload=True,
+        )
+        return response.points
