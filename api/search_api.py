@@ -7,8 +7,8 @@ from typing import Any
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel, Field
 
-from multimodal_search_engine.embedder import CLIPEmbedder
-from multimodal_search_engine.qdrant_search_client import QdrantSearchClient
+from encoders.embedder import CLIPEmbedder
+from store.qdrant_search_client import QdrantSearchClient
 
 app = FastAPI()
 DATA_DIR = Path(__file__).resolve().parents[1] / "data"
