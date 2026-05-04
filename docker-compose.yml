@@ -1,4 +1,9 @@
 services:
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+
   store:
     build:
       context: ./store
@@ -14,11 +19,29 @@ services:
       dockerfile: api/Dockerfile
     depends_on:
       - store
+      - redis
     environment:
       QDRANT_HOST: store
       QDRANT_PORT: "6333"
+      REDIS_HOST: redis
+      REDIS_PORT: "6379"
     ports:
       - "8000:8000"
+    volumes:
+      - ./data:/app/data:ro
+
+  worker:
+    build:
+      context: .
+      dockerfile: worker/Dockerfile
+    depends_on:
+      - store
+      - redis
+    environment:
+      QDRANT_HOST: store
+      QDRANT_PORT: "6333"
+      REDIS_HOST: redis
+      REDIS_PORT: "6379"
     volumes:
       - ./data:/app/data:ro
 

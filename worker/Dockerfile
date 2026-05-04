@@ -16,17 +16,12 @@ RUN uv pip install --system --no-cache \
 RUN uv pip install --system --no-cache \
     pillow \
     transformers \
-    fastapi \
-    "uvicorn[standard]" \
-    python-multipart \
     qdrant-client \
     redis
 
-COPY api /app/api
+COPY worker /app/worker
 COPY encoders /app/encoders
 COPY store /app/store
 COPY data /app/data
 
-EXPOSE 8000
-
-CMD ["uvicorn", "api.search_api:app", "--host", "0.0.0.0", "--port", "8000"]
+CMD ["python", "-m", "worker.consumer"]
