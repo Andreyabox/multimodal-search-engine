@@ -5,7 +5,7 @@ from qdrant_client import QdrantClient, models
 
 class QdrantSearchClient:
     def __init__(self, host: str | None = None, port: int | None = None):
-        self.client = QdrantClient(":memory:")
+        # self.client = QdrantClient(":memory:")
         if host is None:
             host = os.environ.get("QDRANT_HOST", "localhost")
         if port is None:
@@ -14,7 +14,7 @@ class QdrantSearchClient:
                 port = int(port_env)
             except ValueError:
                 port = 6333
-        # self.client = QdrantClient(host=host, port=port)
+        self.client = QdrantClient(host=host, port=port)
 
     def create_collection(self, collection_name: str, vector_size: int):
         self.client.recreate_collection(

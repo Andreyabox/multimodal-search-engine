@@ -1,0 +1,37 @@
+services:
+  store:
+    build:
+      context: ./store
+    ports:
+      - "6333:6333"
+      - "6334:6334"
+    volumes:
+      - qdrant_storage:/qdrant/storage
+
+  api:
+    build:
+      context: .
+      dockerfile: api/Dockerfile
+    depends_on:
+      - store
+    environment:
+      QDRANT_HOST: store
+      QDRANT_PORT: "6333"
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./data:/app/data:ro
+
+  ui:
+    build:
+      context: .
+      dockerfile: ui/Dockerfile
+    depends_on:
+      - api
+    environment:
+      SEARCH_API_BASE_URL: http://api:8000
+    ports:
+      - "8501:8501"
+
+volumes:
+  qdrant_storage:
