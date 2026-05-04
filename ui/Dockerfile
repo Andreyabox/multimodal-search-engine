@@ -1,19 +1,12 @@
-FROM python:3.11-slim
+FROM nginx:alpine
 
-# Устанавливаем uv через копирование бинарника из официального образа
-COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
+WORKDIR /usr/share/nginx/html
+RUN rm -rf ./*
 
-ENV PYTHONDONTWRITEBYTECODE=1 \
-    PYTHONUNBUFFERED=1 \
-    # Указываем uv не создавать виртуальное окружение внутри контейнера
-    UV_SYSTEM_PYTHON=1
+COPY ui/index.html .
+COPY ui/style.css .
+COPY ui/app.js .
 
-WORKDIR /app
+EXPOSE 80
 
-RUN uv pip install --system --no-cache streamlit
-
-COPY ui /app/ui
-
-EXPOSE 8501
-
-CMD ["streamlit", "run", "ui/streamlit_app.py", "--server.address=0.0.0.0", "--server.port=8501"]
+CMD ["nginx", "-g", "daemon off;"]

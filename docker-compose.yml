@@ -21,12 +21,12 @@ services:
       - store
       - redis
     environment:
+      DEBUG: "False"
       QDRANT_HOST: store
       QDRANT_PORT: "6333"
       REDIS_HOST: redis
       REDIS_PORT: "6379"
-    ports:
-      - "8000:8000"
+      HF_TOKEN: ${HF_TOKEN}
     volumes:
       - ./data:/app/data:ro
 
@@ -42,6 +42,7 @@ services:
       QDRANT_PORT: "6333"
       REDIS_HOST: redis
       REDIS_PORT: "6379"
+      HF_TOKEN: ${HF_TOKEN}
     volumes:
       - ./data:/app/data:ro
 
@@ -51,10 +52,16 @@ services:
       dockerfile: ui/Dockerfile
     depends_on:
       - api
-    environment:
-      SEARCH_API_BASE_URL: http://api:8000
+
+  nginx:
+    image: nginx:alpine
     ports:
-      - "8501:8501"
+      - "80:80"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+    depends_on:
+      - api
+      - ui
 
 volumes:
   qdrant_storage:

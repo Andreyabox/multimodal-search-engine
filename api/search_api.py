@@ -7,12 +7,21 @@ import redis
 from datetime import datetime, timezone
 from typing import Any
 from fastapi import FastAPI, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 
 from encoders.embedder import CLIPEmbedder
 from store.qdrant_search_client import QdrantSearchClient
 
 app = FastAPI()
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 COLLECTION_NAME = "web_harvested_images"
 QUEUE_NAME = "indexing_queue"
