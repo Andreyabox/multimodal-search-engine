@@ -1,5 +1,5 @@
 def main():
-    print("Hello from multimodal-search-engine!")
+    print("Hello from search-engine!")
 
 
 if __name__ == "__main__":

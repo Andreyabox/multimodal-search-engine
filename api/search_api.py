@@ -14,6 +14,7 @@ app = FastAPI()
 DATA_DIR = Path(__file__).resolve().parents[1] / "data"
 DATASET_PATH = DATA_DIR / "web_harvested_dataset" / "train.csv"
 COLLECTION_NAME = "web_harvested_images"
+BATCH_SIZE = 32
 
 embedder: CLIPEmbedder | None = None
 search_client = QdrantSearchClient()
