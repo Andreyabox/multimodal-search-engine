@@ -95,31 +95,41 @@ document.addEventListener('DOMContentLoaded', () => {
         results.forEach(item => {
             const card = document.createElement('div');
             card.className = 'image-card';
-            
+
             const captionStr = item.caption || 'Без описания';
             const scoreStr = item.score !== undefined ? parseFloat(item.score).toFixed(4) : 'N/A';
-            
+
+            const imgWrapper = document.createElement('div');
+            imgWrapper.className = 'img-wrapper';
+
             if (item.image_url) {
-                card.innerHTML = `
-                    <div class="img-wrapper">
-                        <img src="${item.image_url}" alt="${captionStr}" loading="lazy" />
-                    </div>
-                    <div class="img-info">
-                        <div class="img-caption" title="${captionStr}">${captionStr}</div>
-                        <div class="img-score">Score: ${scoreStr}</div>
-                    </div>
-                `;
+                const image = document.createElement('img');
+                image.src = item.image_url;
+                image.alt = captionStr;
+                image.loading = 'lazy';
+                imgWrapper.appendChild(image);
             } else {
-                card.innerHTML = `
-                    <div class="img-wrapper" style="background: rgba(255,255,255,0.05);">
-                        <span style="color: var(--text-secondary);">Нет изображения</span>
-                    </div>
-                    <div class="img-info">
-                        <div class="img-caption" title="${captionStr}">${captionStr}</div>
-                        <div class="img-score">Score: ${scoreStr}</div>
-                    </div>
-                `;
+                imgWrapper.style.background = 'rgba(255,255,255,0.05)';
+                const placeholder = document.createElement('span');
+                placeholder.style.color = 'var(--text-secondary)';
+                placeholder.textContent = 'Нет изображения';
+                imgWrapper.appendChild(placeholder);
             }
+
+            const imgInfo = document.createElement('div');
+            imgInfo.className = 'img-info';
+
+            const caption = document.createElement('div');
+            caption.className = 'img-caption';
+            caption.title = captionStr;
+            caption.textContent = captionStr;
+
+            const score = document.createElement('div');
+            score.className = 'img-score';
+            score.textContent = `Score: ${scoreStr}`;
+
+            imgInfo.append(caption, score);
+            card.append(imgWrapper, imgInfo);
             resultsGrid.appendChild(card);
         });
     }

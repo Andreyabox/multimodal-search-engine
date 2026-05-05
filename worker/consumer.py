@@ -5,12 +5,11 @@ import os
 import signal
 import sys
 import time
-from datetime import datetime, timezone
-from pathlib import Path
-
 import redis
 
-from encoders.embedder import CLIPEmbedder
+from datetime import datetime, timezone
+from pathlib import Path
+from encoders.client import CLIPEmbedderClient
 from store.qdrant_search_client import QdrantSearchClient
 
 logging.basicConfig(
@@ -27,6 +26,7 @@ DATA_DIR = Path(__file__).resolve().parents[1] / "data"
 DATASET_PATH = DATA_DIR / "web_harvested_dataset" / "train.csv"
 COLLECTION_NAME = "web_harvested_images"
 BATCH_SIZE = 32
+SERVICE_RETRY_DELAY_SECONDS = 2
 
 _shutdown = False
 
@@ -42,6 +42,20 @@ signal.signal(signal.SIGTERM, _handle_signal)
 
 def _redis_client() -> redis.Redis:
     return redis.Redis(host=REDIS_HOST, port=REDIS_PORT, decode_responses=True)
+
+
+def _wait_for_qdrant() -> None:
+    while not _shutdown:
+        try:
+            QdrantSearchClient().client.get_collections()
+            return
+        except Exception as exc:
+            logger.warning(
+                "Qdrant not reachable yet, retrying in %s s: %s",
+                SERVICE_RETRY_DELAY_SECONDS,
+                exc,
+            )
+            time.sleep(SERVICE_RETRY_DELAY_SECONDS)
 
 
 def _update_task_status(
@@ -80,9 +94,9 @@ def _load_dataset() -> list[dict[str, str]]:
 
 def _run_indexing(r: redis.Redis, task_id: str) -> None:
     """Load CLIP model, embed dataset, upsert into Qdrant."""
-    _update_task_status(r, task_id, "running", progress="Loading CLIP model…")
-    logger.info("[%s] Loading CLIP model…", task_id)
-    embedder = CLIPEmbedder()
+    _update_task_status(r, task_id, "running", progress="Connecting to embedder…")
+    logger.info("[%s] Connecting to embedder service…", task_id)
+    embedder = CLIPEmbedderClient()
 
     _update_task_status(r, task_id, "running", progress="Loading dataset…")
     logger.info("[%s] Loading dataset…", task_id)
@@ -94,8 +108,17 @@ def _run_indexing(r: redis.Redis, task_id: str) -> None:
         r, task_id, "running", progress=f"Embedding {len(rows)} captions…"
     )
     logger.info("[%s] Embedding %d captions…", task_id, len(rows))
-    captions = [row["caption"] for row in rows]
-    vectors = embedder.embed_texts(captions).tolist()
+    vectors = []
+    for batch_start in range(0, len(rows), BATCH_SIZE):
+        batch = rows[batch_start:batch_start + BATCH_SIZE]
+        captions = [row["caption"] for row in batch]
+        vectors.extend(embedder.embed_texts(captions).tolist())
+        _update_task_status(
+            r,
+            task_id,
+            "running",
+            progress=f"Embedding captions {min(batch_start + BATCH_SIZE, len(rows))}/{len(rows)}...",
+        )
     vector_size = len(vectors[0])
 
     _update_task_status(r, task_id, "running", progress="Upserting into Qdrant…")
@@ -120,10 +143,16 @@ def main() -> None:
             r.ping()
             break
         except redis.ConnectionError:
-            logger.warning("Redis not reachable yet, retrying in 2 s…")
-            time.sleep(2)
+            logger.warning(
+                "Redis not reachable yet, retrying in %s s...",
+                SERVICE_RETRY_DELAY_SECONDS,
+            )
+            time.sleep(SERVICE_RETRY_DELAY_SECONDS)
 
-    logger.info("Connected to Redis. Waiting for tasks…")
+    logger.info("Connected to Redis. Waiting for Qdrant...")
+    _wait_for_qdrant()
+
+    logger.info("Connected to Redis and Qdrant. Waiting for tasks...")
 
     while not _shutdown:
         result = r.brpop(QUEUE_NAME, timeout=1)

@@ -1,27 +1,23 @@
 FROM python:3.11-slim
 
-# Устанавливаем uv через копирование бинарника из официального образа
 COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
 
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
-    # Указываем uv не создавать виртуальное окружение внутри контейнера
     UV_SYSTEM_PYTHON=1
 
 WORKDIR /app
 
 RUN uv pip install --system --no-cache \
-    torch --index-url https://download.pytorch.org/whl/cpu
-
-RUN uv pip install --system --no-cache \
-    pillow \
-    transformers \
     qdrant-client \
-    redis
+    redis \
+    httpx \
+    numpy
 
 COPY worker /app/worker
-COPY encoders /app/encoders
 COPY store /app/store
 COPY data /app/data
+COPY encoders/__init__.py /app/encoders/__init__.py
+COPY encoders/client.py /app/encoders/client.py
 
 CMD ["python", "-m", "worker.consumer"]

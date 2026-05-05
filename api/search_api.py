@@ -10,7 +10,7 @@ from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 
-from encoders.embedder import CLIPEmbedder
+from encoders.client import CLIPEmbedderClient
 from store.qdrant_search_client import QdrantSearchClient
 
 app = FastAPI()
@@ -40,7 +40,7 @@ def _get_redis() -> redis.Redis:
     return _redis
 
 
-embedder: CLIPEmbedder | None = None
+embedder: CLIPEmbedderClient | None = None
 search_client = QdrantSearchClient()
 
 
@@ -117,7 +117,7 @@ async def search(request: SearchRequest) -> dict[str, Any]:
             )
 
         if embedder is None:
-            embedder = CLIPEmbedder()
+            embedder = CLIPEmbedderClient()
 
         query_vector = embedder.embed_texts([query])[0].tolist()
         points = search_client.search_text(

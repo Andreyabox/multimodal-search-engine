@@ -13,20 +13,50 @@ services:
     volumes:
       - qdrant_storage:/qdrant/storage
 
+  encoders:
+    build:
+      context: .
+      dockerfile: encoders/Dockerfile
+    environment:
+      HF_TOKEN: ${HF_TOKEN}
+      HF_HOME: /opt/hf-cache
+      TRANSFORMERS_CACHE: /opt/hf-cache
+    volumes:
+      - hf_cache:/opt/hf-cache
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "python",
+          "-c",
+          "import urllib.request; urllib.request.urlopen('http://localhost:8001/healthz').read()",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 30
+      start_period: 60s
+
   api:
     build:
       context: .
       dockerfile: api/Dockerfile
+    ports:
+      - "8000:8000"
     depends_on:
-      - store
-      - redis
+      encoders:
+        condition: service_healthy
+      store:
+        condition: service_started
+      redis:
+        condition: service_started
     environment:
       DEBUG: "False"
       QDRANT_HOST: store
       QDRANT_PORT: "6333"
       REDIS_HOST: redis
       REDIS_PORT: "6379"
-      HF_TOKEN: ${HF_TOKEN}
+      EMBEDDER_HOST: encoders
+      EMBEDDER_PORT: "8001"
     volumes:
       - ./data:/app/data:ro
 
@@ -35,14 +65,19 @@ services:
       context: .
       dockerfile: worker/Dockerfile
     depends_on:
-      - store
-      - redis
+      encoders:
+        condition: service_healthy
+      store:
+        condition: service_started
+      redis:
+        condition: service_started
     environment:
       QDRANT_HOST: store
       QDRANT_PORT: "6333"
       REDIS_HOST: redis
       REDIS_PORT: "6379"
-      HF_TOKEN: ${HF_TOKEN}
+      EMBEDDER_HOST: encoders
+      EMBEDDER_PORT: "8001"
     volumes:
       - ./data:/app/data:ro
 
@@ -65,3 +100,4 @@ services:
 
 volumes:
   qdrant_storage:
+  hf_cache:

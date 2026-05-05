@@ -1,12 +1,12 @@
 FROM python:3.11-slim
 
-# Устанавливаем uv через копирование бинарника из официального образа
 COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
 
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
-    # Указываем uv не создавать виртуальное окружение внутри контейнера
-    UV_SYSTEM_PYTHON=1
+    UV_SYSTEM_PYTHON=1 \
+    HF_HOME=/opt/hf-cache \
+    TRANSFORMERS_CACHE=/opt/hf-cache
 
 WORKDIR /app
 
@@ -15,8 +15,15 @@ RUN uv pip install --system --no-cache \
 
 RUN uv pip install --system --no-cache \
     pillow \
-    transformers
+    transformers \
+    fastapi \
+    "uvicorn[standard]" \
+    python-multipart
+
+RUN mkdir -p /opt/hf-cache
 
 COPY encoders /app/encoders
 
-CMD ["python", "-m", "encoders.embedder"]
+EXPOSE 8001
+
+CMD ["uvicorn", "encoders.embedder_service:app", "--host", "0.0.0.0", "--port", "8001"]

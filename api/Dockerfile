@@ -5,27 +5,24 @@ COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
 
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
-    # Указываем uv не создавать виртуальное окружение внутри контейнера
     UV_SYSTEM_PYTHON=1
 
 WORKDIR /app
 
 RUN uv pip install --system --no-cache \
-    torch --index-url https://download.pytorch.org/whl/cpu
-
-RUN uv pip install --system --no-cache \
-    pillow \
-    transformers \
     fastapi \
     "uvicorn[standard]" \
     python-multipart \
     qdrant-client \
-    redis
+    redis \
+    httpx \
+    numpy
 
 COPY api /app/api
-COPY encoders /app/encoders
 COPY store /app/store
 COPY data /app/data
+COPY encoders/__init__.py /app/encoders/__init__.py
+COPY encoders/client.py /app/encoders/client.py
 
 EXPOSE 8000
 
