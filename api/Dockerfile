@@ -1,6 +1,5 @@
 FROM python:3.11-slim
 
-# Устанавливаем uv через копирование бинарника из официального образа
 COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
 
 ENV PYTHONDONTWRITEBYTECODE=1 \

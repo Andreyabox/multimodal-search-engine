@@ -205,3 +205,11 @@ cython_debug/
 marimo/_static/
 marimo/_lsp/
 __marimo__/
+
+# Локальные данные (датасет MultiVENT 2.0 и т.п.) — слишком большие для git,
+# скачиваются отдельным скриптом scripts/download_dataset.py.
+data/*
+!data/.gitkeep
+!data/web_harvested_dataset/
+!data/web_harvested_dataset/**
+data/multi_vent_2/

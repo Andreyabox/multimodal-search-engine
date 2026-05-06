@@ -1,6 +1,5 @@
 import os
 import uuid
-
 import uvicorn
 import redis
 
@@ -9,7 +8,6 @@ from typing import Any
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
-
 from encoders.client import CLIPEmbedderClient
 from store.qdrant_search_client import QdrantSearchClient
 
