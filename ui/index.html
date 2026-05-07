@@ -16,19 +16,19 @@
                 <h2>О приложении</h2>
             </div>
             <div class="sidebar-content">
-                <p>Это приложение для поиска картинок по текстовому запросу</p>
+                <p>Это приложение для поиска картинок и видео по текстовому запросу</p>
             </div>
         </aside>
 
         <!-- Main Content -->
         <main class="main-content">
             <header>
-                <h1>Мультимодальный поиск картинок</h1>
+                <h1>Мультимодальный поиск</h1>
             </header>
 
             <div class="tabs">
                 <button class="tab-btn active" data-target="search-tab">Поиск картинок</button>
-                <button class="tab-btn" data-target="upload-tab">Загрузка картинок</button>
+                <button class="tab-btn" data-target="video-tab">Поиск видео</button>
             </div>
 
             <div class="tab-content active" id="search-tab">
@@ -65,13 +65,44 @@
                 </div>
             </div>
 
-            <div class="tab-content" id="upload-tab">
-                <div class="card">
-                    <h2>Загрузка картинок</h2>
-                    <p>Загрузите ваши картинки для последующего поиска по ним.</p>
-                    <div class="upload-area">
-                        <p>Функция в разработке</p>
-                    </div>
+            <div class="tab-content" id="video-tab">
+                <div class="card search-card">
+                    <form id="video-search-form">
+                        <div class="form-group">
+                            <label for="video-query">Введите запрос для поиска видео на английском языке</label>
+                            <input type="text" id="video-query" value="protest" required />
+                        </div>
+
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="video-top-k">Количество результатов</label>
+                                <input type="number" id="video-top-k" min="1" max="50" value="5" step="1" required />
+                            </div>
+                            <div class="form-group">
+                                <label for="video-mode" title="text — по описанию (caption+title); image — по визуальному содержимому кадров">Режим поиска</label>
+                                <select id="video-mode">
+                                    <option value="text" selected>По описанию (text)</option>
+                                    <option value="image">По кадрам (image)</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="video-api-url" title="Например: /api или http://localhost:8000">API base URL</label>
+                                <input type="text" id="video-api-url" value="/api" required />
+                            </div>
+                        </div>
+
+                        <button type="submit" class="btn-primary" id="video-search-btn">
+                            <span class="btn-text">Найти видео</span>
+                            <span class="loader" style="display: none;"></span>
+                        </button>
+                    </form>
+                </div>
+
+                <div class="results-container">
+                    <h3 id="video-results-title" style="display: none;">Результаты: <span id="video-results-query"></span></h3>
+                    <div id="video-results-error" class="error-msg" style="display: none;"></div>
+                    <div id="video-results-grid" class="image-grid"></div>
+                    <div id="video-no-results" class="info-msg" style="display: none;">Ничего не найдено.</div>
                 </div>
             </div>
         </main>

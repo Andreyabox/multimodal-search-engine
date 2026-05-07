@@ -8,11 +8,17 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
 
 WORKDIR /app
 
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends ffmpeg \
+    && rm -rf /var/lib/apt/lists/*
+
 RUN uv pip install --system --no-cache \
     qdrant-client \
     redis \
     httpx \
-    numpy
+    numpy \
+    pillow \
+    opencv-python-headless
 
 COPY worker /app/worker
 COPY store /app/store

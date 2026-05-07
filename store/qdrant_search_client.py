@@ -37,11 +37,50 @@ class QdrantSearchClient:
         ]
         self.client.upsert(collection_name=collection_name, points=points, wait=True)
 
+    def upsert_video_points(
+        self,
+        collection_name: str,
+        ids,
+        text_vectors,
+        image_vectors,
+        payloads,
+    ):
+        points = [
+            models.PointStruct(
+                id=point_id,
+                vector={"text": text_vector, "image": image_vector},
+                payload=payload,
+            )
+            for point_id, text_vector, image_vector, payload in zip(
+                ids, text_vectors, image_vectors, payloads
+            )
+        ]
+        self.client.upsert(collection_name=collection_name, points=points, wait=True)
+
     def search_text(self, collection_name: str, query_vector, limit: int = 5):
         response = self.client.query_points(
             collection_name=collection_name,
             query=query_vector,
             using="text",
+            limit=limit,
+            with_payload=True,
+        )
+        return response.points
+
+    def search(
+        self,
+        collection_name: str,
+        query_vector,
+        using: str = "text",
+        limit: int = 5,
+    ):
+        """Generic vector search supporting either named vector ('text' or 'image')."""
+        if using not in {"text", "image"}:
+            raise ValueError(f"Unsupported vector name: {using!r}")
+        response = self.client.query_points(
+            collection_name=collection_name,
+            query=query_vector,
+            using=using,
             limit=limit,
             with_payload=True,
         )
