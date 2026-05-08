@@ -25,7 +25,7 @@ gated‑датасет с Hugging Face. В git он **не хранится** (1
 3. Скопируйте `.env.example` в `.env` и подставьте `HF_TOKEN=hf_...`.
 4. Установите зависимости и скачайте подвыборку или полный датасет:
 
-   ```bash
+   ```powershell
    uv sync
    # подвыборка для разработки/демо (~600 МБ)
    uv run python scripts/download_dataset.py --subset 000724
@@ -46,12 +46,17 @@ gated‑датасет с Hugging Face. В git он **не хранится** (1
 3. При повторных запусках `docker compose down && docker compose up`
 
 ## После запуска:
-1а. Сделать индексацию через API:
+1. Сделать индексацию через API:
 http://127.0.0.1:8000/docs
-1б. Сделать индексацию через curl.exe:
-curl.exe -X POST http://localhost:8000/index
-curl.exe -X POST http://localhost:8000/index/video
-2. Зайти на: http://localhost
-3. Перейти на "Поиск видео". Нажать на кнопку "Найти видео"
-4. Если все прошло успешно, то появятся результаты поиска
-5. Qdrant: http://localhost:6333/dashboard#/collections
+2. ИЛИ сделать индексацию при помощи curl.exe:
+
+   ```powershell
+   # для изображений
+   curl.exe -X POST http://localhost:8000/index
+   # для видео
+   curl.exe -X POST http://localhost:8000/index/video
+   ```
+3. Зайти на: http://localhost
+4. Перейти на "Поиск видео". Нажать на кнопку "Найти видео"
+5. Если все прошло успешно, то появятся результаты поиска
+6. Дополнительно можно посмотреть Qdrant: http://localhost:6333/dashboard#/collections
