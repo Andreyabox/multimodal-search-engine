@@ -45,8 +45,13 @@ gated‑датасет с Hugging Face. В git он **не хранится** (1
 2. `docker compose up --build`
 3. При повторных запусках `docker compose down && docker compose up`
 
-## Куда смотреть после запуска:
-1. Зайти на: http://localhost
-2. Нажать на кнопку "Найти"
-3. Если все прошло успешно, то появятся результаты поиска
-4. Qdrant: http://localhost:6333/dashboard#/collections
+## После запуска:
+1а. Сделать индексацию через API:
+http://127.0.0.1:8000/docs
+1б. Сделать индексацию через curl.exe:
+curl.exe -X POST http://localhost:8000/index
+curl.exe -X POST http://localhost:8000/index/video
+2. Зайти на: http://localhost
+3. Перейти на "Поиск видео". Нажать на кнопку "Найти видео"
+4. Если все прошло успешно, то появятся результаты поиска
+5. Qdrant: http://localhost:6333/dashboard#/collections
