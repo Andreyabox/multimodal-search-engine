@@ -244,6 +244,7 @@ def _run_video_indexing(r: redis.Redis, task_id: str) -> None:
     ids: list[str] = []
     text_vectors: list[list[float]] = []
     image_vectors: list[list[float]] = []
+    sparse_vectors: list[dict] = []
     payloads: list[dict] = []
 
     for processed, item in enumerate(items, start=1):
@@ -277,6 +278,7 @@ def _run_video_indexing(r: redis.Redis, task_id: str) -> None:
         try:
             text_vec = embedder.embed_texts([text_for_embed])[0]
             frame_vecs = embedder.embed_images(frames)
+            sparse_vec = embedder.embed_texts_sparse([text_for_embed])[0]
         except Exception as exc:
             logger.warning("[%s] Embedding failed for %s: %s", task_id, video_id, exc)
             continue
@@ -286,6 +288,7 @@ def _run_video_indexing(r: redis.Redis, task_id: str) -> None:
         ids.append(_video_point_id(shard, video_id))
         text_vectors.append(text_vec.astype(np.float32).tolist())
         image_vectors.append(image_vec.astype(np.float32).tolist())
+        sparse_vectors.append(sparse_vec)
         payloads.append(
             {
                 "video_id": video_id,
@@ -318,13 +321,18 @@ def _run_video_indexing(r: redis.Redis, task_id: str) -> None:
     _update_task_status(r, task_id, "running", progress="Upserting into Qdrant…")
     logger.info("[%s] Upserting %d points into Qdrant…", task_id, len(ids))
     search_client = QdrantSearchClient()
-    search_client.create_collection(VIDEOS_COLLECTION_NAME, vector_size=vector_size)
+    search_client.create_collection(
+        VIDEOS_COLLECTION_NAME,
+        vector_size=vector_size,
+        with_bm25=True,
+    )
     search_client.upsert_video_points(
         VIDEOS_COLLECTION_NAME,
         ids=ids,
         text_vectors=text_vectors,
         image_vectors=image_vectors,
         payloads=payloads,
+        sparse_vectors=sparse_vectors,
     )
 
     _update_task_status(r, task_id, "completed", progress=f"Indexed {len(ids)} videos")

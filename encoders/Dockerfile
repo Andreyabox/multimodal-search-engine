@@ -18,7 +18,8 @@ RUN uv pip install --system --no-cache \
     transformers \
     fastapi \
     "uvicorn[standard]" \
-    python-multipart
+    python-multipart \
+    fastembed
 
 RUN mkdir -p /opt/hf-cache
 

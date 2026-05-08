@@ -83,8 +83,11 @@ class VideoSearchRequest(BaseModel):
     top_k: int = Field(default=5, ge=1, le=50, description="Number of results")
     mode: str = Field(
         default="text",
-        pattern="^(text|image)$",
-        description="Which named vector to query against in Qdrant.",
+        pattern="^(text|image|sparse|hybrid)$",
+        description=(
+            "Which Qdrant vector to query: 'text'/'image' (CLIP dense), "
+            "'sparse' (BM25), or 'hybrid' (CLIP text + BM25 RRF fusion)."
+        ),
     )
 
 
@@ -188,13 +191,33 @@ async def search_video(request: VideoSearchRequest) -> dict[str, Any]:
                 ),
             )
 
-        query_vector = _require_embedder().embed_texts([query])[0].tolist()
-        points = search_client.search(
-            VIDEOS_COLLECTION_NAME,
-            query_vector=query_vector,
-            using=request.mode,
-            limit=request.top_k,
-        )
+        embedder_client = _require_embedder()
+
+        if request.mode == "sparse":
+            sparse_query = embedder_client.embed_query_sparse(query)
+            points = search_client.search(
+                VIDEOS_COLLECTION_NAME,
+                query_vector=sparse_query,
+                using="bm25",
+                limit=request.top_k,
+            )
+        elif request.mode == "hybrid":
+            dense_vector = embedder_client.embed_texts([query])[0].tolist()
+            sparse_query = embedder_client.embed_query_sparse(query)
+            points = search_client.search_hybrid(
+                VIDEOS_COLLECTION_NAME,
+                dense_text_vector=dense_vector,
+                sparse_query=sparse_query,
+                limit=request.top_k,
+            )
+        else:
+            query_vector = embedder_client.embed_texts([query])[0].tolist()
+            points = search_client.search(
+                VIDEOS_COLLECTION_NAME,
+                query_vector=query_vector,
+                using=request.mode,
+                limit=request.top_k,
+            )
     except HTTPException:
         raise
     except Exception as exc:

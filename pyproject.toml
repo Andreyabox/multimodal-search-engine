@@ -6,6 +6,7 @@ readme = "README.md"
 requires-python = ">=3.11"
 dependencies = [
     "fastapi>=0.128.0",
+    "fastembed>=0.4",
     "httpx>=0.27.0",
     "huggingface-hub>=0.26.0",
     "pillow>=12.1.0",

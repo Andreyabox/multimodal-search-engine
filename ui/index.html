@@ -70,7 +70,7 @@
                     <form id="video-search-form">
                         <div class="form-group">
                             <label for="video-query">Введите запрос для поиска видео на английском языке</label>
-                            <input type="text" id="video-query" value="protest" required />
+                            <input type="text" id="video-query" value="The Google Assistant" required />
                         </div>
 
                         <div class="form-row">
@@ -79,10 +79,12 @@
                                 <input type="number" id="video-top-k" min="1" max="50" value="5" step="1" required />
                             </div>
                             <div class="form-group">
-                                <label for="video-mode" title="text — по описанию (caption+title); image — по визуальному содержимому кадров">Режим поиска</label>
+                                <label for="video-mode" title="text — CLIP по описанию; image — CLIP по кадрам; sparse — BM25 по описанию; hybrid — CLIP text + BM25 (RRF)">Режим поиска</label>
                                 <select id="video-mode">
-                                    <option value="text" selected>По описанию (text)</option>
+                                    <option value="text">По описанию (text)</option>
                                     <option value="image">По кадрам (image)</option>
+                                    <option value="sparse">BM25 (sparse)</option>
+                                    <option value="hybrid" selected>Гибрид (CLIP + BM25, RRF)</option>
                                 </select>
                             </div>
                             <div class="form-group">
