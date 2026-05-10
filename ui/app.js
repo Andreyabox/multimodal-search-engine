@@ -206,6 +206,81 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
+    function renderVideoCard(item, apiUrl) {
+        const card = document.createElement('div');
+        card.className = 'image-card video-card';
+
+        const title = item.title || item.video_id || 'Без названия';
+        const captionStr = item.caption || '';
+        const scoreStr = item.score !== undefined ? parseFloat(item.score).toFixed(4) : 'N/A';
+        const videoSrc = item.video_url ? `${apiUrl}${item.video_url}` : null;
+
+        const wrapper = document.createElement('div');
+        wrapper.className = 'img-wrapper video-wrapper';
+
+        if (videoSrc) {
+            const video = document.createElement('video');
+            video.controls = true;
+            video.preload = 'metadata';
+            if (item.thumbnail_url) {
+                video.poster = item.thumbnail_url;
+            }
+            const source = document.createElement('source');
+            source.src = videoSrc;
+            source.type = 'video/mp4';
+            video.appendChild(source);
+            wrapper.appendChild(video);
+        } else if (item.thumbnail_url) {
+            const image = document.createElement('img');
+            image.src = item.thumbnail_url;
+            image.alt = title;
+            image.loading = 'lazy';
+            wrapper.appendChild(image);
+        } else {
+            const placeholder = document.createElement('span');
+            placeholder.style.color = 'var(--text-secondary)';
+            placeholder.textContent = 'Нет превью';
+            wrapper.appendChild(placeholder);
+        }
+
+        const info = document.createElement('div');
+        info.className = 'img-info';
+
+        const titleEl = document.createElement('div');
+        titleEl.className = 'img-caption video-title';
+        titleEl.title = title;
+        titleEl.textContent = title;
+
+        const captionEl = document.createElement('div');
+        captionEl.className = 'video-caption';
+        captionEl.title = captionStr;
+        captionEl.textContent = captionStr;
+
+        const meta = document.createElement('div');
+        meta.className = 'video-meta';
+
+        const score = document.createElement('span');
+        score.className = 'img-score';
+        score.textContent = `Score: ${scoreStr}`;
+        meta.appendChild(score);
+
+        if (item.youtube_url) {
+            const link = document.createElement('a');
+            link.className = 'video-yt-link';
+            link.href = item.youtube_url;
+            link.target = '_blank';
+            link.rel = 'noopener noreferrer';
+            link.textContent = 'YouTube';
+            meta.appendChild(link);
+        }
+
+        info.append(titleEl);
+        if (captionStr) info.append(captionEl);
+        info.append(meta);
+        card.append(wrapper, info);
+        return card;
+    }
+
     function displayVideoResults(results, queryStr, apiUrl) {
         videoResultsQuery.textContent = queryStr;
         videoResultsTitle.style.display = 'block';
@@ -216,78 +291,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         results.forEach(item => {
-            const card = document.createElement('div');
-            card.className = 'image-card video-card';
-
-            const title = item.title || item.video_id || 'Без названия';
-            const captionStr = item.caption || '';
-            const scoreStr = item.score !== undefined ? parseFloat(item.score).toFixed(4) : 'N/A';
-            const videoSrc = item.video_url ? `${apiUrl}${item.video_url}` : null;
-
-            const wrapper = document.createElement('div');
-            wrapper.className = 'img-wrapper video-wrapper';
-
-            if (videoSrc) {
-                const video = document.createElement('video');
-                video.controls = true;
-                video.preload = 'metadata';
-                if (item.thumbnail_url) {
-                    video.poster = item.thumbnail_url;
-                }
-                const source = document.createElement('source');
-                source.src = videoSrc;
-                source.type = 'video/mp4';
-                video.appendChild(source);
-                wrapper.appendChild(video);
-            } else if (item.thumbnail_url) {
-                const image = document.createElement('img');
-                image.src = item.thumbnail_url;
-                image.alt = title;
-                image.loading = 'lazy';
-                wrapper.appendChild(image);
-            } else {
-                const placeholder = document.createElement('span');
-                placeholder.style.color = 'var(--text-secondary)';
-                placeholder.textContent = 'Нет превью';
-                wrapper.appendChild(placeholder);
-            }
-
-            const info = document.createElement('div');
-            info.className = 'img-info';
-
-            const titleEl = document.createElement('div');
-            titleEl.className = 'img-caption video-title';
-            titleEl.title = title;
-            titleEl.textContent = title;
-
-            const captionEl = document.createElement('div');
-            captionEl.className = 'video-caption';
-            captionEl.title = captionStr;
-            captionEl.textContent = captionStr;
-
-            const meta = document.createElement('div');
-            meta.className = 'video-meta';
-
-            const score = document.createElement('span');
-            score.className = 'img-score';
-            score.textContent = `Score: ${scoreStr}`;
-            meta.appendChild(score);
-
-            if (item.youtube_url) {
-                const link = document.createElement('a');
-                link.className = 'video-yt-link';
-                link.href = item.youtube_url;
-                link.target = '_blank';
-                link.rel = 'noopener noreferrer';
-                link.textContent = 'YouTube';
-                meta.appendChild(link);
-            }
-
-            info.append(titleEl);
-            if (captionStr) info.append(captionEl);
-            info.append(meta);
-            card.append(wrapper, info);
-            videoResultsGrid.appendChild(card);
+            videoResultsGrid.appendChild(renderVideoCard(item, apiUrl));
         });
     }
 
@@ -298,5 +302,112 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function hideVideoError() {
         videoErrorMsg.style.display = 'none';
+    }
+
+    // ---------- Video Search by Image ----------
+    const vbiForm = document.getElementById('vbi-search-form');
+    const vbiBtn = document.getElementById('vbi-search-btn');
+    const vbiBtnText = vbiBtn.querySelector('.btn-text');
+    const vbiLoader = vbiBtn.querySelector('.loader');
+    const vbiFileInput = document.getElementById('vbi-file');
+    const vbiPreview = document.getElementById('vbi-preview');
+    const vbiResultsTitle = document.getElementById('vbi-results-title');
+    const vbiResultsQuery = document.getElementById('vbi-results-query');
+    const vbiResultsGrid = document.getElementById('vbi-results-grid');
+    const vbiErrorMsg = document.getElementById('vbi-results-error');
+    const vbiNoResults = document.getElementById('vbi-no-results');
+
+    let vbiPreviewUrl = null;
+    vbiFileInput.addEventListener('change', () => {
+        const file = vbiFileInput.files && vbiFileInput.files[0];
+        if (vbiPreviewUrl) {
+            URL.revokeObjectURL(vbiPreviewUrl);
+            vbiPreviewUrl = null;
+        }
+        if (!file) {
+            vbiPreview.hidden = true;
+            vbiPreview.removeAttribute('src');
+            return;
+        }
+        vbiPreviewUrl = URL.createObjectURL(file);
+        vbiPreview.src = vbiPreviewUrl;
+        vbiPreview.hidden = false;
+    });
+
+    vbiForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+
+        const file = vbiFileInput.files && vbiFileInput.files[0];
+        const top_k = parseInt(document.getElementById('vbi-top-k').value);
+        let api_url = document.getElementById('vbi-api-url').value.trim();
+
+        if (!file) {
+            showVbiError("Выберите изображение для поиска.");
+            return;
+        }
+        if (api_url.endsWith('/')) {
+            api_url = api_url.slice(0, -1);
+        }
+
+        vbiBtn.disabled = true;
+        vbiBtnText.style.display = 'none';
+        vbiLoader.style.display = 'inline-block';
+        hideVbiError();
+        vbiResultsTitle.style.display = 'none';
+        vbiResultsGrid.innerHTML = '';
+        vbiNoResults.style.display = 'none';
+
+        try {
+            const fd = new FormData();
+            fd.append('file', file);
+            fd.append('top_k', String(top_k));
+
+            const response = await fetch(`${api_url}/search/video/by-image`, {
+                method: 'POST',
+                body: fd
+            });
+
+            if (!response.ok) {
+                let errorDetails = response.statusText;
+                try {
+                    const errorText = await response.text();
+                    if (errorText) errorDetails = errorText;
+                } catch (e) {}
+                throw new Error(`API вернуло ошибку HTTP ${response.status}: ${errorDetails}`);
+            }
+
+            const data = await response.json();
+            displayVbiResults(data.results || [], data.query_image || file.name, api_url);
+
+        } catch (error) {
+            showVbiError(`Ошибка поиска видео: ${error.message}`);
+        } finally {
+            vbiBtn.disabled = false;
+            vbiBtnText.style.display = 'inline-block';
+            vbiLoader.style.display = 'none';
+        }
+    });
+
+    function displayVbiResults(results, queryStr, apiUrl) {
+        vbiResultsQuery.textContent = queryStr;
+        vbiResultsTitle.style.display = 'block';
+
+        if (results.length === 0) {
+            vbiNoResults.style.display = 'block';
+            return;
+        }
+
+        results.forEach(item => {
+            vbiResultsGrid.appendChild(renderVideoCard(item, apiUrl));
+        });
+    }
+
+    function showVbiError(msg) {
+        vbiErrorMsg.textContent = msg;
+        vbiErrorMsg.style.display = 'block';
+    }
+
+    function hideVbiError() {
+        vbiErrorMsg.style.display = 'none';
     }
 });

@@ -45,6 +45,18 @@ class CLIPEmbedderClient:
             response.raise_for_status()
         return np.asarray(response.json()["vectors"], dtype=np.float32)
 
+    def embed_image_bytes(
+        self,
+        data: bytes,
+        filename: str = "upload",
+        content_type: str = "application/octet-stream",
+    ) -> np.ndarray:
+        files = [("files", (filename, data, content_type))]
+        with httpx.Client(timeout=self.timeout) as client:
+            response = client.post(f"{self.base_url}/embed/images", files=files)
+            response.raise_for_status()
+        return np.asarray(response.json()["vectors"], dtype=np.float32)
+
     def embed_texts_sparse(self, texts: Iterable[str]) -> list[SparseVector]:
         payload = {"texts": list(texts)}
         with httpx.Client(timeout=self.timeout) as client:

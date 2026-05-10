@@ -7,7 +7,7 @@ import redis
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, File, Form, HTTPException, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 from pydantic import BaseModel, Field
@@ -242,6 +242,77 @@ async def search_video(request: VideoSearchRequest) -> dict[str, Any]:
         )
 
     return {"query": query, "mode": request.mode, "results": results}
+
+
+@app.post("/search/video/by-image")
+async def search_video_by_image(
+    file: UploadFile = File(...),
+    top_k: int = Form(5, ge=1, le=50),
+) -> dict[str, Any]:
+    """Search videos by an uploaded image.
+
+    Кодирует загруженное изображение CLIP image-энкодером (в сервисе encoders)
+    и ищет ближайшие видео по плотному вектору `image` в коллекции
+    multi_vent_videos. Индекс видео должен быть построен через POST /index/video.
+    """
+    if file.content_type and not file.content_type.startswith("image/"):
+        raise HTTPException(
+            status_code=400, detail="Uploaded file must be an image."
+        )
+
+    data = await file.read()
+    if not data:
+        raise HTTPException(status_code=400, detail="Uploaded file is empty.")
+
+    try:
+        try:
+            search_client.client.get_collection(VIDEOS_COLLECTION_NAME)
+        except Exception:
+            raise HTTPException(
+                status_code=503,
+                detail=(
+                    "Video index is not ready yet. Submit POST /index/video first "
+                    "and wait for completion."
+                ),
+            )
+
+        embedder_client = _require_embedder()
+        query_vector = embedder_client.embed_image_bytes(
+            data,
+            filename=file.filename or "upload",
+            content_type=file.content_type or "application/octet-stream",
+        )[0].tolist()
+
+        points = search_client.search(
+            VIDEOS_COLLECTION_NAME,
+            query_vector=query_vector,
+            using="image",
+            limit=top_k,
+        )
+    except HTTPException:
+        raise
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=f"Video search failed: {exc}") from exc
+
+    results = []
+    for point in points:
+        payload = point.payload or {}
+        results.append(
+            {
+                "video_id": payload.get("video_id"),
+                "shard": payload.get("shard"),
+                "title": payload.get("title"),
+                "caption": payload.get("caption"),
+                "youtube_url": payload.get("youtube_url"),
+                "thumbnail_url": payload.get("thumbnail_url"),
+                "video_url": payload.get("video_url"),
+                "category": payload.get("category"),
+                "duration": payload.get("duration"),
+                "score": float(point.score),
+            }
+        )
+
+    return {"query_image": file.filename, "mode": "image", "results": results}
 
 
 @app.get("/videos/{shard}/{video_id}.mp4")

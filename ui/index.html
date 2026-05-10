@@ -16,7 +16,7 @@
                 <h2>О приложении</h2>
             </div>
             <div class="sidebar-content">
-                <p>Это приложение для поиска картинок и видео по текстовому запросу</p>
+                <p>Это приложение для поиска изображений и видео по текстовому запросу</p>
             </div>
         </aside>
 
@@ -27,8 +27,9 @@
             </header>
 
             <div class="tabs">
-                <button class="tab-btn active" data-target="search-tab">Поиск картинок</button>
-                <button class="tab-btn" data-target="video-tab">Поиск видео</button>
+                <button class="tab-btn active" data-target="search-tab">Поиск изображений</button>
+                <button class="tab-btn" data-target="video-tab">Поиск видео по тексту</button>
+                <button class="tab-btn" data-target="video-by-image-tab">Поиск видео по изображению</button>
             </div>
 
             <div class="tab-content active" id="search-tab">
@@ -105,6 +106,44 @@
                     <div id="video-results-error" class="error-msg" style="display: none;"></div>
                     <div id="video-results-grid" class="image-grid"></div>
                     <div id="video-no-results" class="info-msg" style="display: none;">Ничего не найдено.</div>
+                </div>
+            </div>
+
+            <div class="tab-content" id="video-by-image-tab">
+                <div class="card search-card">
+                    <form id="vbi-search-form">
+                        <div class="form-group">
+                            <label for="vbi-file">Загрузите изображение для поиска похожих видео</label>
+                            <input type="file" id="vbi-file" accept="image/*" required />
+                        </div>
+
+                        <div class="vbi-preview-wrapper">
+                            <img id="vbi-preview" alt="Превью загруженного изображения" hidden />
+                        </div>
+
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="vbi-top-k">Количество результатов</label>
+                                <input type="number" id="vbi-top-k" min="1" max="50" value="5" step="1" required />
+                            </div>
+                            <div class="form-group">
+                                <label for="vbi-api-url" title="Например: /api или http://localhost:8000">API base URL</label>
+                                <input type="text" id="vbi-api-url" value="/api" required />
+                            </div>
+                        </div>
+
+                        <button type="submit" class="btn-primary" id="vbi-search-btn">
+                            <span class="btn-text">Найти видео</span>
+                            <span class="loader" style="display: none;"></span>
+                        </button>
+                    </form>
+                </div>
+
+                <div class="results-container">
+                    <h3 id="vbi-results-title" style="display: none;">Результаты для: <span id="vbi-results-query"></span></h3>
+                    <div id="vbi-results-error" class="error-msg" style="display: none;"></div>
+                    <div id="vbi-results-grid" class="image-grid"></div>
+                    <div id="vbi-no-results" class="info-msg" style="display: none;">Ничего не найдено.</div>
                 </div>
             </div>
         </main>
