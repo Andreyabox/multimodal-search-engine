@@ -17,3 +17,8 @@ Thumbs.db
 # Editor
 .vscode/
 .idea/
+
+# Experiments / research notebooks — не нужны ни в одном образе
+experiments/
+*.ipynb
+.ipynb_checkpoints/
